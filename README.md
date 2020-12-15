@@ -1,3 +1,9 @@
+This is my solution for the Kidnapped Vehicle Project for Udacity Self-Driving Car nanodegree program. 
+
+# Acknowledgements
+The project is created according to Udacity nanodegree program. The skaffolding of the code is created by Udacity.
+
+
 # Overview
 This repository contains all the code needed to complete the final project for the Localization course in Udacity's Self-Driving Car Nanodegree.
 
