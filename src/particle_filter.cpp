@@ -61,12 +61,27 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
   std::random_device rd{};
   std::mt19937 gen{rd()};
 
-  for(Particle& p : particles) {
-    double mult = velocity / yaw_rate;
-    double delta_theta = yaw_rate * delta_t;
-    p.x = mult * (sin(p.theta + delta_theta) - sin(p.theta)) + std::normal_distribution<>(p.x, std_pos[0])(gen);
-    p.y = mult * (cos(p.theta) - cos(p.theta + delta_theta)) + std::normal_distribution<>(p.y, std_pos[1])(gen);
-    p.theta += std::normal_distribution<>(delta_theta, std_pos[2])(gen);
+  constexpr double ZERO_POS = 0.05;
+  constexpr double ZERO_NEG = -1.0 * ZERO_POS;
+
+  if (ZERO_NEG < yaw_rate && yaw_rate < ZERO_POS)  // yaw_rate is zero or almost zero
+  {
+    double dist = velocity * delta_t;
+    for(Particle& p : particles) {
+      p.theta = std::normal_distribution<>(p.theta, std_pos[2])(gen);
+      p.x = cos(p.theta) * dist + std::normal_distribution<>(p.x, std_pos[0])(gen);
+      p.y = sin(p.theta) * dist + std::normal_distribution<>(p.y, std_pos[1])(gen);
+    }
+  }
+  else  // calculate with yaw_rate
+  {
+    for(Particle& p : particles) {
+      double mult = velocity / yaw_rate;
+      double delta_theta = yaw_rate * delta_t;
+      p.x = mult * (sin(p.theta + delta_theta) - sin(p.theta)) + std::normal_distribution<>(p.x, std_pos[0])(gen);
+      p.y = mult * (cos(p.theta) - cos(p.theta + delta_theta)) + std::normal_distribution<>(p.y, std_pos[1])(gen);
+      p.theta += std::normal_distribution<>(delta_theta, std_pos[2])(gen);
+    }
   }
 }
 
