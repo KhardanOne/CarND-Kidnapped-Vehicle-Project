@@ -30,7 +30,7 @@ int main() {
 
   // Set up parameters here
   double delta_t = 0.1;  // Time elapsed between measurements [sec]
-  double sensor_range = 50;  // Sensor range [m]
+  double sensor_range2 = 50 * 50;  // Sensor range [m]
 
   // GPS measurement uncertainty [x [m], y [m], theta [rad]]
   double sigma_pos [3] = {0.3, 0.3, 0.01};
@@ -47,7 +47,7 @@ int main() {
   // Create particle filter
   ParticleFilter pf;
 
-  h.onMessage([&pf,&map,&delta_t,&sensor_range,&sigma_pos,&sigma_landmark]
+  h.onMessage([&pf,&map,&delta_t,&sensor_range2,&sigma_pos,&sigma_landmark]
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, 
                uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -100,15 +100,16 @@ int main() {
           std::istream_iterator<float>(),
           std::back_inserter(y_sense));
 
-          for (int i = 0; i < x_sense.size(); ++i) {
+          for (size_t i = 0; i < x_sense.size(); ++i) {
             LandmarkObs obs;
+            obs.id = i;
             obs.x = x_sense[i];
             obs.y = y_sense[i];
             noisy_observations.push_back(obs);
           }
 
           // Update the weights and resample
-          pf.updateWeights(sensor_range, sigma_landmark, noisy_observations, map);
+          pf.updateWeights(sensor_range2, sigma_landmark, noisy_observations, map);
           pf.resample();
 
           // Calculate and output the average weighted error of the particle 

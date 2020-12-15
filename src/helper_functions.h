@@ -30,13 +30,18 @@ struct control_s {
 };
 
 /**
- * Struct representing one ground truth position.
+ * Struct representing one position with direction.
  */
-struct ground_truth {
+struct PosDir {
   double x;     // Global vehicle x position [m]
   double y;     // Global vehicle y position
   double theta; // Global vehicle yaw [rad]
 };
+
+/**
+ * Struct representing one ground truth position.
+ */
+using ground_truth = PosDir;
 
 /**
  * Struct representing one landmark observation measurement.
@@ -49,13 +54,31 @@ struct LandmarkObs {
 };
 
 /**
- * Computes the Euclidean distance between two 2D points.
+ * transform return a new LandmarkObs with positions transformed to
+ * the word coordinate system.
+ */
+LandmarkObs transform(LandmarkObs lm, PosDir posdir);
+
+/**
+ * MultivariateGaussian calculates probability of point (x,y) being
+ * at (mu_x, mu_y) with (sig_x, sig_y) standard deviation.
+ * @param x x coordinate
+ * @param y y coordinate
+ * @param mu_x x reference coordinate
+ * @param mu_y y reference coordinate
+ * @param sig_x sigma x standard deviation
+ * @param sig_y sigma y standard deviation
+ */
+double multivariateGaussian(double x, double y, double mu_x, double mu_y, double sig_x, double sig_y);
+
+/**
+ * Computes the power of 2 of the Euclidean distance between two 2D points.
  * @param (x1,y1) x and y coordinates of first point
  * @param (x2,y2) x and y coordinates of second point
- * @output Euclidean distance between two 2D points
+ * @output Euclidean distance between two 2D points on the power of 2.
  */
-inline double dist(double x1, double y1, double x2, double y2) {
-  return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+inline double dist2(double x1, double y1, double x2, double y2) {
+  return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
 }
 
 /**
