@@ -19,7 +19,7 @@
 
 using namespace std;
 
-constexpr int k_num_particles = 1000;
+constexpr int k_num_particles = 50;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
    /**
