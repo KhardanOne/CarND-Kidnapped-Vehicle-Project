@@ -61,7 +61,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
   std::random_device rd{};
   std::mt19937 gen{rd()};
 
-  for(Particle p : particles) {
+  for(Particle& p : particles) {
     double mult = velocity / yaw_rate;
     double delta_theta = yaw_rate * delta_t;
     p.x = mult * (sin(p.theta + delta_theta) - sin(p.theta)) + std::normal_distribution<>(p.x, std_pos[0])(gen);
@@ -103,17 +103,23 @@ void ParticleFilter::updateWeights(double sensor_range2, double std_landmark[],
       //std::cout << "obs id:" << obs.id << ": ";
       LandmarkObs obst = ::transform(obs, pd);
       double best_weight = 0.0;
+      //int best_dist = 999;
       for (const Map::single_landmark_s& lm : map_landmarks.landmark_list) {
-        if (dist2(obst.x, obst.y, lm.x_f, lm.y_f) <= sensor_range2) {
+        double d2 = dist2(obst.x, obst.y, lm.x_f, lm.y_f);
+        if ( d2 <= sensor_range2) {
+          //int d = round(sqrt(d2));
+          //std::cout << d << ",";
           double w = ::multivariateGaussian(obst.x, obst.y, lm.x_f, lm.y_f, std_landmark[0], std_landmark[1]);
           //std::cout << w << " * ";
           best_weight = max(best_weight, w);
+          //best_dist = min(best_dist, d);
         }
       }
       p.weight *= best_weight;
+      //std::cout << ", best dist:" << best_dist << std::endl;
       //std::cout << ", p.weight multiplied with: " << best_weight << ", p.weight = " << p.weight << std::endl;
     }
-    std::cout << "p[" << p.id << "] weight: " << p.weight << std::endl;
+    //std::cout << "p[" << p.id << "] weight: " << p.weight << std::endl;
     weights.push_back(p.weight);
   }
 }
