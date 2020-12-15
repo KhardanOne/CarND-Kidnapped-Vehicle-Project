@@ -19,7 +19,7 @@
 
 using namespace std;
 
-constexpr int k_num_particles = 50;
+constexpr int k_num_particles = 100;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
    /**
@@ -76,11 +76,12 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
   else  // calculate with yaw_rate
   {
     for(Particle& p : particles) {
-      double mult = velocity / yaw_rate;
-      double delta_theta = yaw_rate * delta_t;
-      p.x = mult * (sin(p.theta + delta_theta) - sin(p.theta)) + std::normal_distribution<>(p.x, std_pos[0])(gen);
-      p.y = mult * (cos(p.theta) - cos(p.theta + delta_theta)) + std::normal_distribution<>(p.y, std_pos[1])(gen);
+      const double mult = velocity / yaw_rate;
+      const double delta_theta = yaw_rate * delta_t;
       p.theta += std::normal_distribution<>(delta_theta, std_pos[2])(gen);
+      const double new_theta = p.theta + delta_theta; 
+      p.x = mult * (sin(new_theta) - sin(p.theta)) + std::normal_distribution<>(p.x, std_pos[0])(gen);
+      p.y = mult * (cos(p.theta) - cos(new_theta)) + std::normal_distribution<>(p.y, std_pos[1])(gen);
     }
   }
 }
@@ -111,30 +112,20 @@ void ParticleFilter::updateWeights(double sensor_range2, double std_landmark[],
    */
   weights.clear();
   weights.reserve(num_particles);
-  for (Particle& p : particles) {
+  for (Particle &p : particles) {
     p.weight = 1.0;
-    PosDir pd{p.x, p.y, p.theta};
-    for (const LandmarkObs& obs : observations) {
-      //std::cout << "obs id:" << obs.id << ": ";
-      LandmarkObs obst = ::transform(obs, pd);
+    for (const LandmarkObs &obs : observations) {
+      const LandmarkObs obst = ::transform(obs, {p.x, p.y, p.theta});
       double best_weight = 0.0;
-      //int best_dist = 999;
-      for (const Map::single_landmark_s& lm : map_landmarks.landmark_list) {
-        double d2 = dist2(obst.x, obst.y, lm.x_f, lm.y_f);
+      for (const Map::single_landmark_s &lm : map_landmarks.landmark_list) {
+        const double d2 = dist2(obst.x, obst.y, lm.x_f, lm.y_f);
         if ( d2 <= sensor_range2) {
-          //int d = round(sqrt(d2));
-          //std::cout << d << ",";
-          double w = ::multivariateGaussian(obst.x, obst.y, lm.x_f, lm.y_f, std_landmark[0], std_landmark[1]);
-          //std::cout << w << " * ";
+          const double w = ::multivariateGaussian(obst.x, obst.y, lm.x_f, lm.y_f, std_landmark[0], std_landmark[1]);
           best_weight = max(best_weight, w);
-          //best_dist = min(best_dist, d);
         }
       }
       p.weight *= best_weight;
-      //std::cout << ", best dist:" << best_dist << std::endl;
-      //std::cout << ", p.weight multiplied with: " << best_weight << ", p.weight = " << p.weight << std::endl;
     }
-    //std::cout << "p[" << p.id << "] weight: " << p.weight << std::endl;
     weights.push_back(p.weight);
   }
 }
@@ -152,7 +143,7 @@ void ParticleFilter::resample() {
   std::vector<Particle> new_particles;
   new_particles.reserve(num_particles);
   for (int i = 0; i < num_particles; ++i) {
-    new_particles.push_back(particles[dist(gen)]);
+    new_particles.push_back(std::move( particles[dist(gen)] ));
   }
   particles = std::move(new_particles);
 }
