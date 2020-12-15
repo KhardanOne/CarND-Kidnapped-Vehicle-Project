@@ -139,6 +139,7 @@ void ParticleFilter::resample() {
   for (int i = 0; i < num_particles; ++i) {
     new_particles.push_back(particles[dist(gen)]);
   }
+  particles = std::move(new_particles);
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, 
