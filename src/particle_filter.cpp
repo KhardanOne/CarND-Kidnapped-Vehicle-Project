@@ -96,21 +96,24 @@ void ParticleFilter::updateWeights(double sensor_range2, double std_landmark[],
    */
   weights.clear();
   weights.reserve(num_particles);
-  for (Particle p : particles) {
+  for (Particle& p : particles) {
     p.weight = 1.0;
     PosDir pd{p.x, p.y, p.theta};
-    for (LandmarkObs obs : observations) {
-      std::cout << "obs id:" << obs.id << ": ";
+    for (const LandmarkObs& obs : observations) {
+      //std::cout << "obs id:" << obs.id << ": ";
       LandmarkObs obst = ::transform(obs, pd);
-      for (Map::single_landmark_s lm : map_landmarks.landmark_list) {
-        if (dist2(obs.x, obs.y, lm.x_f, lm.y_f) <= sensor_range2) {
+      double best_weight = 0.0;
+      for (const Map::single_landmark_s& lm : map_landmarks.landmark_list) {
+        if (dist2(obst.x, obst.y, lm.x_f, lm.y_f) <= sensor_range2) {
           double w = ::multivariateGaussian(obst.x, obst.y, lm.x_f, lm.y_f, std_landmark[0], std_landmark[1]);
-          std::cout << w << " * ";
-          p.weight *= w;
+          //std::cout << w << " * ";
+          best_weight = max(best_weight, w);
         }
       }
-      std::cout << ", p.weight stored: " << p.weight << std::endl;
+      p.weight *= best_weight;
+      //std::cout << ", p.weight multiplied with: " << best_weight << ", p.weight = " << p.weight << std::endl;
     }
+    std::cout << "p[" << p.id << "] weight: " << p.weight << std::endl;
     weights.push_back(p.weight);
   }
 }
